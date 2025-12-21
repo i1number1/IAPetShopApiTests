@@ -78,6 +78,7 @@ class TestPet:
             assert response_json['name'] == payload['name'], "Имя питомца не совпадает с ожидаемым"
             assert response_json['status'] == payload['status'], "Статус питомца не совпадает с ожидаемым"
 
+
     @allure.title("Добавление нового питомца с полными данными")
     def test_full_add_pet(self):
 
@@ -110,3 +111,56 @@ class TestPet:
             assert response_json['photoUrls'] == payload['photoUrls'], "ФотоURLs питомца не совпадает с ожидаемым"
             assert response_json['tags'] == payload['tags'], "Статус питомца не совпадает с ожидаемым"
             assert response_json['status'] == payload['status'], "Статус питомца не совпадает с ожидаемым"
+
+
+    @allure.title("Добавление нового питомца по ID")
+    def test_get_pet_by_id(self, create_pet):
+
+        with allure.step("Получение ID созданного питомца"):
+            pet_id = create_pet["id"]
+
+        with allure.step("Отправка запроса на получение информации о питомце по ID"):
+            response = requests.get(url=f"{BASE_URL}/pet/{pet_id}")
+
+        with allure.step("Проверка статуса ответа и данных питомца"):
+            assert response.status_code == 200, "Код ответа не совпал с ожидаемым"
+            assert response.json()["id"] == pet_id
+
+
+    @allure.title("Попытка обновить существующего питомца")
+    def test_update_existent_pet(self, create_pet):
+
+        with allure.step("Получение ID созданного питомца"):
+            pet_id = create_pet["id"]
+
+        with allure.step("Отправка запроса на обновление существующего питомца"):
+            payload = {
+                "id": 4,
+                "name": "Buddy Updated",
+                "status": "sold"
+            }
+            response = requests.put(url=f"{BASE_URL}/pet", json=payload)
+
+        with allure.step("Проверка статуса ответа и обновленных данных питомца"):
+            assert response.status_code == 200, "Код ответа не совпал с ожидаемым"
+            assert response.json()["id"] == payload["id"]
+            assert response.json()["name"] == payload["name"]
+            assert response.json()["status"] == payload["status"]
+
+
+    @allure.title("Попытка удалить существующего питомца по ID")
+    def test_delete_existent_pet_by_id(self, create_pet):
+        with allure.step("Получение ID созданного питомца"):
+            pet_id = create_pet["id"]
+
+        with allure.step("Отправка запроса на удаление существующего питомца по ID"):
+            response = requests.delete(url=f"{BASE_URL}/pet/{pet_id}")
+
+        with allure.step("Проверка статуса ответа"):
+            assert response.status_code == 200, "Код ответа не совпал с ожидаемым"
+
+        with allure.step("Отправка запроса на получение информации об удаленном питомце"):
+            response = requests.get(url=f"{BASE_URL}/pet/{pet_id}")
+
+        with allure.step("Проверка статуса ответа"):
+            assert response.status_code == 404, "Код ответа не совпал с ожидаемым"
